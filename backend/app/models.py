@@ -303,6 +303,7 @@ class Order(Base):
     client_ref: Mapped[str] = mapped_column(String(40), unique=True)
     customer_id: Mapped[int] = mapped_column(ForeignKey("customers.id"))
     salesman_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    order_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(12), default="SUBMITTED")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     reject_reason: Mapped[str | None] = mapped_column(String(200))
@@ -312,7 +313,7 @@ class Order(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "status IN ('SUBMITTED','APPROVED','REJECTED','INVOICED','DISPATCHED')",
+            "status IN ('SUBMITTED','APPROVED','REJECTED','INVOICED','DISPATCHED','CANCELLED')",
             name="ck_order_status",
         ),
     )
@@ -330,11 +331,16 @@ class OrderLine(Base):
     item: Mapped[Item] = relationship()
 
 
-class InvoiceCounter(Base):
-    """Next invoice number per financial year, e.g. '2026-27' -> 1, 2, 3..."""
+class DocCounter(Base):
+    """Last number used per document series and financial year.
 
-    __tablename__ = "invoice_counters"
+    ('INV', '2026-27') -> 1, 2, 3...   ('CN', '2026-27') -> 1, 2...
+    Numbering restarts every 1 April: one series per financial year.
+    """
 
+    __tablename__ = "doc_counters"
+
+    series: Mapped[str] = mapped_column(String(5), primary_key=True)
     fin_year: Mapped[str] = mapped_column(String(7), primary_key=True)
     last_no: Mapped[int] = mapped_column(default=0)
 
