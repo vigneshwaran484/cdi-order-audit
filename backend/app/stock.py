@@ -73,14 +73,17 @@ def post_move(
     source_id: int | None,
     move_date: date,
     unit_cost: Decimal | None = None,
+    value: Decimal | None = None,
     note: str | None = None,
     user_id: int | None = None,
     allow_negative: bool = False,
 ) -> StockMove:
     """Write one ledger row.
 
-    Receipts (qty > 0) must pass unit_cost. Issues (qty < 0) are costed at the
-    current weighted average and are refused if they would go below zero.
+    Receipts (qty > 0) must pass unit_cost; they may also pass an exact total
+    `value` (e.g. a run's material cost) so the rate's rounding doesn't lose
+    paise. Issues (qty < 0) are costed at the current weighted average and are
+    refused if they would go below zero.
     """
     qty = Decimal(qty)
     if qty < 0:
@@ -100,7 +103,7 @@ def post_move(
     else:
         if unit_cost is None:
             raise ValueError("Receipts need a unit_cost")
-        value = money(qty * unit_cost)
+        value = money(value) if value is not None else money(qty * unit_cost)
 
     move = StockMove(
         item_id=item_id,
