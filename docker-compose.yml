@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cdi
+      POSTGRES_PASSWORD: cdi
+      POSTGRES_DB: cdi
+    ports:
+      - "5433:5432"   # 5433 on the host so it doesn't clash with a local Postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./backend/initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cdi"]
+      interval: 3s
+      retries: 10
+
+volumes:
+  pgdata:
