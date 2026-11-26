@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Order-to-Audit{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <meta name="theme-color" content="#1f4e79">
+</head>
+<body class="{% block bodyclass %}{% endblock %}">
+<header class="top">
+  <a class="brand" href="/">Order-to-Audit</a>
+  {% if user %}
+  <nav>
+    {% if user.role == 'SALESMAN' %}
+      <a href="/m" class="{{ 'on' if path == '/m' }}">New order</a>
+      <a href="/m/orders" class="{{ 'on' if path == '/m/orders' }}">My orders</a>
+    {% else %}
+      {% for label, href in menu %}<a href="{{ href }}" class="{{ 'on' if path == href }}">{{ label }}</a>{% endfor %}
+    {% endif %}
+  </nav>
+  <form method="post" action="/logout" class="who">
+    <span>{{ user.full_name }} · {{ user.role|lower }}</span>
+    <button class="link">Log out</button>
+  </form>
+  {% endif %}
+</header>
+<main>
+  {% for kind, msg in flashes %}<div class="flash {{ kind }}">{{ msg }}</div>{% endfor %}
+  {% block content %}{% endblock %}
+</main>
+{% block scripts %}{% endblock %}
+</body>
+</html>

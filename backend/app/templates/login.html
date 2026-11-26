@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block bodyclass %}narrow{% endblock %}
+{% block content %}
+<h1>Sign in</h1>
+{% if error %}<div class="flash error">{{ error }}</div>{% endif %}
+<form method="post" action="/login" class="card stack">
+  <label>Username <input name="username" value="{{ username or '' }}" autocapitalize="none" autofocus required></label>
+  <label>Password <input name="password" type="password" required></label>
+  <button>Sign in</button>
+</form>
+<div class="card muted small">
+  <b>Demo logins</b> (password <code>demo123</code>):
+  salesman_a, salesman_b (mobile orders) · admin (orders, invoices, payments) ·
+  production (purchases, runs) · auditor (reports, read-only) · owner (dashboard)
+</div>
+{% endblock %}
