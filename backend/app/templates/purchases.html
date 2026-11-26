@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Purchases (raw material and packaging received)</h1>
+<form method="post" action="/production/purchases" class="card stack">
+  <div class="row">
+    <label>Supplier <select name="supplier_id">{% for s in suppliers %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}</select></label>
+    <label>Bill no <input name="bill_no" required></label>
+    <label>Bill date <input type="date" name="bill_date"></label>
+  </div>
+  {% for i in range(1, 4) %}
+  <div class="row">
+    <label>Item <select name="item_{{ i }}"><option value="">—</option>{% for it in items %}<option value="{{ it.id }}">{{ it.name }} ({{ it.stock_unit }})</option>{% endfor %}</select></label>
+    <label>Qty <input class="num" name="qty_{{ i }}"></label>
+    <label>Unit <select name="unit_{{ i }}">{% for u in units %}<option>{{ u.code }}</option>{% endfor %}</select></label>
+    <label>Rate per unit (₹, before tax) <input class="num" name="rate_{{ i }}"></label>
+  </div>
+  {% endfor %}
+  <div><button>Save purchase: stock goes up</button></div>
+</form>
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th>Bill</th><th>Supplier</th><th>Lines</th><th class="n">Amount</th></tr>
+  {% for p in rows %}
+  <tr><td>{{ p.bill_date.strftime('%d-%m-%Y') }}</td><td>{{ p.bill_no }}</td><td>{{ p.supplier.name }}</td>
+    <td>{% for ln in p.lines %}{{ ln.item.name }}: {{ ln.qty|qty }} {{ ln.unit }} @ ₹{{ ln.rate|qty }}<br>{% endfor %}</td>
+    <td class="n">₹{{ p.taxable|money }}</td></tr>
+  {% else %}<tr><td colspan="5" class="muted">No purchases yet.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

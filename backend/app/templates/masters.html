@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Masters</h1>
+<div class="tabs"><a href="#items">Items</a><a href="#bom">BOM</a><a href="#customers">Customers</a><a href="#suppliers">Suppliers</a></div>
+
+<h2 id="items">Items</h2>
+<div class="tablewrap"><table>
+  <tr><th>Code</th><th>Name</th><th>Type</th><th>Stock unit</th><th class="n">Balance</th><th class="n">Reorder at</th><th>HSN</th><th class="n">Price</th><th class="n">GST %</th></tr>
+  {% for i in items %}
+  <tr><td>{{ i.code }}</td><td>{{ i.name }}</td><td>{{ i.kind|lower }}</td><td>{{ i.stock_unit }}</td>
+    <td class="n"><a href="/stock/{{ i.id }}">{{ bal[i.id]|qty }}</a></td><td class="n">{{ i.reorder_level|qty }}</td>
+    <td>{{ i.hsn_code or '' }}</td><td class="n">{{ i.sell_price|money }}</td><td class="n">{{ i.gst_rate|qty }}</td></tr>
+  {% endfor %}
+</table></div>
+{% if can_edit %}
+<div class="grid">
+<form method="post" action="/masters/items" class="card stack">
+  <b>Add raw material or packaging</b>
+  <div class="row"><label>Code <input name="code" required placeholder="RM-GHEE"></label><label>Name <input name="name" required></label></div>
+  <div class="row"><label>Type <select name="kind"><option>RAW</option><option>PACKAGING</option></select></label>
+    <label>Stock unit <select name="stock_unit">{% for u in units if u.code != 'ctn' %}<option>{{ u.code }}</option>{% endfor %}</select></label>
+    <label>Reorder at <input class="num" name="reorder_level"></label></div>
+  <div><button class="secondary">Add item</button></div>
+</form>
+<form method="post" action="/masters/products" class="card stack">
+  <b>Add a finished pack size</b>
+  <span class="muted small">Pack sizes share a recipe. Expected packets per batch = recipe output ÷ pack weight.</span>
+  <div class="row"><label>Code <input name="code" required placeholder="FG-MURUKKU-500"></label><label>Name <input name="name" required placeholder="Murukku 500 g"></label></div>
+  <div class="row"><label>Recipe <select name="recipe_id">{% for r in recipes %}<option value="{{ r.id }}">{{ r.name }} ({{ r.output_g|qty }} g/batch)</option>{% endfor %}</select></label>
+    <label>Pack weight (g) <input class="num" name="net_weight_g" required></label>
+    <label>Price before tax <input class="num" name="sell_price" required></label></div>
+  <div class="row"><label>Pouch <select name="pouch_id"><option value="">—</option>{% for p in packaging %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label>
+    <label>Carton <select name="carton_id"><option value="">—</option>{% for p in packaging %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label>
+    <label>Packets per carton <input class="num" name="per_carton"></label></div>
+  <div class="row"><label>HSN <input name="hsn_code" value="21069099"></label><label>GST % <input class="num" name="gst_rate" value="5"></label><label>Reorder at <input class="num" name="reorder_level"></label></div>
+  <div><button class="secondary">Add product</button></div>
+</form>
+</div>
+{% endif %}
+
+<h2 id="bom">Bill of materials</h2>
+<div class="grid">
+{% for r in recipes %}
+<div class="card">
+  <b>Recipe: {{ r.name }}</b> <span class="muted small">one batch = {{ r.output_g|qty }} g of product</span>
+  <table>{% for ln in r.lines %}<tr><td>{{ ln.item.name }}</td><td class="n">{{ ln.qty|qty }} {{ ln.unit }}</td></tr>{% endfor %}</table>
+</div>
+{% endfor %}
+{% for p in finished %}
+<div class="card">
+  <b>{{ p.name }}</b> <span class="muted small">{{ p.net_weight_g|qty }} g · recipe {{ p.recipe.name if p.recipe else '—' }} ·
+    {% if p.recipe %}{{ (p.recipe.output_g / p.net_weight_g)|qty }} packets per batch{% endif %}</span>
+  <table>{% for pl in p.pack_lines %}<tr><td>{{ pl.item.name }}</td><td class="n">{{ pl.qty_per_packet|qty }} per packet</td></tr>{% endfor %}</table>
+</div>
+{% endfor %}
+</div>
+
+<h2 id="customers">Customers</h2>
+<div class="tablewrap"><table>
+  <tr><th>Name</th><th>Type</th><th>GSTIN</th><th>State</th><th>Salesman</th><th>Address</th></tr>
+  {% for c in customers %}<tr><td>{{ c.name }}</td><td>{{ c.kind|lower }}</td><td>{{ c.gstin or 'unregistered' }}</td>
+    <td>{{ STATES.get(c.state_code, c.state_code) }} ({{ c.state_code }})</td><td>{{ users.get(c.salesman_id, 'any') }}</td><td class="small">{{ c.address or '' }}</td></tr>{% endfor %}
+</table></div>
+{% if user.role == 'ADMIN' %}
+<form method="post" action="/masters/customers" class="card row">
+  <label>Name <input name="name" required></label>
+  <label>Type <select name="kind"><option>RETAILER</option><option>DISTRIBUTOR</option></select></label>
+  <label>State <select name="state_code">{% for code, name in STATES.items() %}<option value="{{ code }}" {{ 'selected' if code == '33' }}>{{ name }} ({{ code }})</option>{% endfor %}</select></label>
+  <label>GSTIN <input name="gstin" maxlength="15"></label>
+  <label>Salesman <select name="salesman_id"><option value="">any</option>{% for s in salesmen %}<option value="{{ s.id }}">{{ s.full_name }}</option>{% endfor %}</select></label>
+  <label style="flex:1">Address <input name="address"></label>
+  <button class="secondary">Add customer</button>
+</form>
+{% endif %}
+
+<h2 id="suppliers">Suppliers</h2>
+<div class="tablewrap"><table>
+  <tr><th>Name</th><th>GSTIN</th><th>State</th></tr>
+  {% for s in suppliers %}<tr><td>{{ s.name }}</td><td>{{ s.gstin or '' }}</td><td>{{ STATES.get(s.state_code, s.state_code) }}</td></tr>{% endfor %}
+</table></div>
+{% if can_edit %}
+<form method="post" action="/masters/suppliers" class="card row">
+  <label>Name <input name="name" required></label><label>GSTIN <input name="gstin" maxlength="15"></label>
+  <label>State <select name="state_code">{% for code, name in STATES.items() %}<option value="{{ code }}" {{ 'selected' if code == '33' }}>{{ name }}</option>{% endfor %}</select></label>
+  <button class="secondary">Add supplier</button>
+</form>
+{% endif %}
+{% endblock %}

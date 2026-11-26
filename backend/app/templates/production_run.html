@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/production">← Runs</a></p>
+<h1>Run {{ run.batch_no }} · {{ run.product.name }}</h1>
+<p class="muted">{{ run.run_date.strftime('%d-%m-%Y') }} · {{ run.batches|qty }} batch(es) · variance tolerance ±{{ s.tolerance_pct|qty }}%</p>
+<div class="grid">
+  <div class="card"><div class="muted small">Expected output</div><div class="kpi">{{ s.expected_output|qty }} pkt</div></div>
+  <div class="card"><div class="muted small">Actual good packets</div><div class="kpi">{{ s.actual_output|qty }} pkt</div></div>
+  <div class="card"><div class="muted small">Yield variance</div><div class="kpi {{ 'bad' if s.yield_flagged else 'good' }}">{{ s.yield_variance_pct }}%</div>
+    {% if s.yield_flagged %}<span class="pill FLAG">beyond tolerance</span>{% endif %}</div>
+  <div class="card"><div class="muted small">Cost per packet</div><div class="kpi">₹{{ cost.per_packet|money }}</div>
+    <div class="muted small">material ₹{{ cost.material_per_packet|money }} + overheads</div></div>
+</div>
+<h2>Planned vs actual consumption</h2>
+<div class="tablewrap"><table>
+  <tr><th>Input</th><th class="n">Planned</th><th class="n">Actual issued</th><th class="n">Damaged / wasted</th><th class="n">Variance</th><th>Alert</th><th class="n">Cost</th></tr>
+  {% for ln in s.lines %}
+  <tr><td>{{ ln.item }}</td><td class="n">{{ ln.planned|qty }} {{ units[ln.item_id] }}</td><td class="n">{{ ln.actual|qty }} {{ units[ln.item_id] }}</td>
+    <td class="n">{{ ln.wasted|qty }}</td><td class="n {{ 'bad' if ln.flagged }}">{{ '%+.2f'|format(ln.variance_pct) if ln.variance_pct is not none else '' }}%</td>
+    <td>{% if ln.flagged %}<span class="pill FLAG">flagged</span>{% endif %}</td><td class="n">₹{{ ln.cost|money }}</td></tr>
+  {% endfor %}
+  <tr class="total"><td colspan="6">Material cost (weighted average)</td><td class="n">₹{{ s.material_cost|money }}</td></tr>
+</table></div>
+
+<div class="grid">
+<div>
+  <h2>Cost build-up</h2>
+  <table class="card">
+    <tr><td>Material</td><td class="n">₹{{ cost.material|money }}</td></tr>
+    <tr><td>Overheads entered for this run</td><td class="n">₹{{ cost.direct_overhead|money }}</td></tr>
+    <tr><td>Share of the month's overhead pool</td><td class="n">₹{{ cost.pool_overhead|money }}</td></tr>
+    <tr class="total"><td>Total ÷ {{ cost.good_packets|qty }} good packets</td><td class="n">₹{{ cost.total|money }} → ₹{{ cost.per_packet|money }}/pkt</td></tr>
+    <tr><td>Selling price (before tax)</td><td class="n">₹{{ run.product.sell_price|money }}</td></tr>
+    {% if cost.per_packet %}<tr><td>Margin per packet</td><td class="n">₹{{ (run.product.sell_price - cost.per_packet)|money }}</td></tr>{% endif %}
+  </table>
+</div>
+<div>
+  <h2>Overheads for this run</h2>
+  {% for o in overheads %}<div>{{ o.category }} · ₹{{ o.amount|money }} {% if o.note %}<span class="muted">({{ o.note }})</span>{% endif %}</div>{% else %}<p class="muted">None yet.</p>{% endfor %}
+  <form method="post" action="/production/overheads" class="card row" style="margin-top:.6rem">
+    <input type="hidden" name="run_id" value="{{ run.id }}">
+    <label>Category <select name="category"><option>LABOUR</option><option>POWER_GAS</option><option>OTHER</option></select></label>
+    <label>Amount <input class="num" name="amount" required></label>
+    <label>Note <input name="note"></label>
+    <button>Add</button>
+  </form>
+</div>
+</div>
+{% endblock %}

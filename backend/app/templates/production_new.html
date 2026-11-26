@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/production">← Runs</a></p>
+<h1>New run: {{ product.name }}</h1>
+<p class="muted">{{ batches|qty }} batch(es) · recipe {{ product.recipe.name }} gives {{ product.recipe.output_g|qty }} g per batch ÷ {{ product.net_weight_g|qty }} g pack
+  = <b>{{ expected|qty }} packets expected</b>.</p>
+<form method="post" action="/production/runs">
+  <input type="hidden" name="product_id" value="{{ product.id }}"><input type="hidden" name="batches" value="{{ batches }}">
+  <div class="card row">
+    <label>Run date <input type="date" name="run_date"></label>
+    <label>Actual good packets <input class="num" name="actual_output" required value="{{ expected|qty }}"></label>
+  </div>
+  <div class="tablewrap"><table>
+    <tr><th>Input</th><th>Type</th><th class="n">On hand</th><th class="n">Standard (BOM)</th><th class="n">Actually issued</th><th>Unit</th><th class="n">Of which damaged / wasted</th></tr>
+    {% for ln in lines %}
+    <tr><td>{{ ln.item_name }}</td><td class="muted small">{{ 'recipe' if ln.source == 'RECIPE' else 'packaging' }}</td>
+      <td class="n">{{ on_hand[ln.item_id]|qty }} {{ ln.unit }}</td>
+      <td class="n">{{ ln.planned_qty|qty }} {{ ln.unit }}</td>
+      <td class="n"><input class="num" name="issued_{{ ln.item_id }}" value="{{ ln.planned_qty|qty }}" required></td>
+      <td><select name="unit_{{ ln.item_id }}">
+        {% for code, u in units.items() if u.dimension == units[ln.unit].dimension %}<option {{ 'selected' if code == ln.unit }}>{{ code }}</option>{% endfor %}
+      </select></td>
+      <td class="n"><input class="num" name="wasted_{{ ln.item_id }}" value="0"></td></tr>
+    {% endfor %}
+  </table></div>
+  <p class="muted small">Packaging standard is shown for the expected output; on save it is re-planned on the actual good packets
+    (a pouch is needed only for a packet that was made; cartons are counted in whole pieces). "Actually issued" includes damaged pieces.</p>
+  <button>Save run: issue materials and receive packets</button>
+</form>
+{% endblock %}

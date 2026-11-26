@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Production runs</h1>
+<form method="get" action="/production/runs/new" class="card row">
+  <label>Product <select name="product_id">{% for p in products %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label>
+  <label>Batches <input class="num" name="batches" value="1"></label>
+  <button>Start a run</button>
+  <span class="muted small">The BOM for the batches is filled in; enter what was actually issued and made.</span>
+</form>
+<div class="tablewrap"><table>
+  <tr><th>Batch no</th><th>Date</th><th>Product</th><th class="n">Expected</th><th class="n">Good packets</th><th class="n">Yield var.</th><th>Alerts</th><th class="n">Material cost</th></tr>
+  {% for r, s in rows %}
+  <tr><td><a href="/production/runs/{{ r.id }}">{{ r.batch_no }}</a></td><td>{{ r.run_date.strftime('%d-%m-%Y') }}</td><td>{{ r.product.name }}</td>
+    <td class="n">{{ s.expected_output|qty }}</td><td class="n">{{ s.actual_output|qty }}</td>
+    <td class="n {{ 'bad' if s.yield_flagged }}">{{ s.yield_variance_pct }}%</td>
+    <td>{% set n = s.lines|selectattr('flagged')|list|length + (1 if s.yield_flagged else 0) %}{% if n %}<span class="pill FLAG">{{ n }} flagged</span>{% endif %}</td>
+    <td class="n">₹{{ s.material_cost|money }}</td></tr>
+  {% else %}<tr><td colspan="8" class="muted">No runs yet.</td></tr>{% endfor %}
+</table></div>
+<h2>Monthly overhead pool</h2>
+<form method="post" action="/production/overheads" class="card row">
+  <label>Category <select name="category"><option>LABOUR</option><option>POWER_GAS</option><option>OTHER</option></select></label>
+  <label>Amount <input class="num" name="amount" required></label>
+  <label>Month <input type="month" name="month_ui" onchange="this.form.month.value=this.value+'-01'"></label>
+  <input type="hidden" name="month">
+  <label style="flex:1">Note <input name="note" placeholder="e.g. November electricity bill"></label>
+  <button class="secondary">Add to pool</button>
+</form>
+<p class="muted small">Overheads not tied to a run are shared across that month's runs by kg of good output. Add overheads for a single run from the run's page.</p>
+{% endblock %}
