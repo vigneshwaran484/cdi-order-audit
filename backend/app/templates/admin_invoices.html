@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Invoices</h1>
+<div class="tablewrap"><table>
+  <tr><th>Number</th><th>Date</th><th>Customer</th><th>POS</th><th class="n">Taxable</th><th class="n">GST</th><th class="n">Total</th><th class="n">Due</th><th>Dispatch</th><th>Status</th></tr>
+  {% for i, due in rows %}
+  <tr><td><a href="/admin/invoices/{{ i.id }}">{{ i.number }}</a></td><td>{{ i.invoice_date.strftime('%d-%m-%Y') }}</td><td>{{ i.customer.name }}</td>
+    <td>{{ i.place_of_supply }}</td><td class="n">{{ i.taxable|money }}</td><td class="n">{{ (i.cgst+i.sgst+i.igst)|money }}</td>
+    <td class="n">{{ i.total|money }}</td><td class="n">{{ due|money }}</td>
+    <td>{{ 'dispatched' if i.dispatched_at else '—' }}</td><td><span class="pill {{ i.status }}">{{ i.status|lower }}</span></td></tr>
+  {% else %}<tr><td colspan="10" class="muted">No invoices yet.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

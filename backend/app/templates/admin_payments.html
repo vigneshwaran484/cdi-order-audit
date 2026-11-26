@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Payments and outstanding</h1>
+<div class="grid">
+<div>
+  <h2>Outstanding by customer</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Customer</th><th class="n">Outstanding</th><th></th></tr>
+    {% for c, bal in balances %}<tr><td>{{ c.name }}</td><td class="n">₹{{ bal|money }}</td><td><a href="?customer_id={{ c.id }}">Receive</a></td></tr>{% endfor %}
+  </table></div>
+</div>
+<div>
+  <h2>Record a payment</h2>
+  <form method="post" action="/admin/payments" class="card stack">
+    <label>Customer <select name="customer_id" onchange="location='?customer_id='+this.value">
+      <option value="">Choose…</option>
+      {% for c in customers %}<option value="{{ c.id }}" {{ 'selected' if c.id == customer_id }}>{{ c.name }}</option>{% endfor %}</select></label>
+    {% if customer_id %}
+    <label>Against invoice <select name="invoice_id"><option value="">On account (oldest invoices first)</option>
+      {% for i, amt in open_inv %}<option value="{{ i.id }}">{{ i.number }}: ₹{{ amt|money }} due</option>{% endfor %}</select></label>
+    <div class="row">
+      <label>Amount <input class="num" name="amount" required></label>
+      <label>Mode <select name="mode"><option>UPI</option><option>CASH</option><option>BANK</option><option>CHEQUE</option></select></label>
+      <label>Date <input type="date" name="paid_on"></label>
+    </div>
+    <label>Reference <input name="reference" placeholder="UTR / cheque no."></label>
+    <button>Record payment</button>
+    {% endif %}
+  </form>
+</div>
+</div>
+<h2>Recent payments</h2>
+<div class="tablewrap"><table>
+  <tr><th>Date</th><th>Customer</th><th>Against</th><th>Mode</th><th>Ref</th><th class="n">Amount</th></tr>
+  {% for p in recent %}<tr><td>{{ p.paid_on.strftime('%d-%m-%Y') }}</td><td>{{ names[p.customer_id] }}</td><td>{{ inv_no.get(p.invoice_id, 'On account') }}</td>
+    <td>{{ p.mode }}</td><td>{{ p.reference or '' }}</td><td class="n">₹{{ p.amount|money }}</td></tr>
+  {% else %}<tr><td colspan="6" class="muted">None yet.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

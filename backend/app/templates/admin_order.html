@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/orders">← Orders</a></p>
+<h1>Order #{{ o.id }} · {{ o.customer.name }} <span class="pill {{ o.status }}">{{ o.status|lower }}</span></h1>
+<p class="muted">By {{ salesman.full_name }} on {{ o.order_date.strftime('%d-%m-%Y') }} ·
+  {{ o.customer.kind|lower }} in {{ STATES.get(o.customer.state_code, o.customer.state_code) }} ·
+  GSTIN {{ o.customer.gstin or 'unregistered' }} ·
+  {% if intra %}intra-state: <b>CGST + SGST</b>{% else %}inter-state: <b>IGST</b>{% endif %}</p>
+{% if o.reject_reason %}<div class="flash error">Rejected: {{ o.reject_reason }}</div>{% endif %}
+
+<div class="grid">
+<div>
+  <h2>Lines</h2>
+  <form method="post" action="/admin/orders/{{ o.id }}/edit">
+  <div class="tablewrap"><table>
+    <tr><th>Product</th><th class="n">Packets</th><th class="n">Rate</th><th class="n">Amount</th></tr>
+    {% for ln in o.lines %}
+    <tr><td>{{ ln.item.name }}</td>
+      {% if o.status == 'SUBMITTED' %}
+      <td class="n"><input class="num" name="qty_{{ ln.id }}" value="{{ ln.qty|qty }}"></td>
+      <td class="n"><input class="num" name="rate_{{ ln.id }}" value="{{ ln.rate }}"></td>
+      {% else %}<td class="n">{{ ln.qty|qty }}</td><td class="n">{{ ln.rate }}</td>{% endif %}
+      <td class="n">{{ (ln.qty * ln.rate)|money }}</td></tr>
+    {% endfor %}
+  </table></div>
+  {% if o.status == 'SUBMITTED' %}<button class="secondary">Save changes</button> <span class="muted small">Edits are logged with your name.</span>{% endif %}
+  </form>
+
+  <h2>Tax preview</h2>
+  <table class="card">
+    <tr><td>Taxable value</td><td class="n">₹{{ tax.taxable|money }}</td></tr>
+    {% if intra %}<tr><td>CGST</td><td class="n">₹{{ tax.cgst|money }}</td></tr><tr><td>SGST</td><td class="n">₹{{ tax.sgst|money }}</td></tr>
+    {% else %}<tr><td>IGST</td><td class="n">₹{{ tax.igst|money }}</td></tr>{% endif %}
+    <tr class="total"><td>Invoice total</td><td class="n">₹{{ tax.total|money }}</td></tr>
+  </table>
+</div>
+<div>
+  <h2>Finished-goods stock check</h2>
+  <div class="tablewrap"><table>
+    <tr><th>Product</th><th class="n">Ordered</th><th class="n">On hand</th><th class="n">Committed</th><th class="n">Available</th><th class="n">Shortage</th></tr>
+    {% for c in check %}
+    <tr><td>{{ c.item }}</td><td class="n">{{ c.ordered|qty }}</td><td class="n">{{ c.on_hand|qty }}</td><td class="n">{{ c.committed|qty }}</td>
+      <td class="n">{{ c.available|qty }}</td><td class="n {{ 'bad' if c.shortage else 'good' }}">{{ c.shortage|qty }}</td></tr>
+    {% endfor %}
+  </table></div>
+  <p class="muted small">Committed = packets promised to other approved orders that are not dispatched yet.</p>
+  {% set short = check|rejectattr('ok')|list %}
+  {% if o.status == 'SUBMITTED' %}
+    {% if short %}
+    <div class="flash error">Not enough stock: short by
+      {% for c in short %}{{ c.shortage|qty }} packets of {{ c.item }}{% endfor %}.
+      Reduce the quantity to what is available, wait for production, or reject.</div>
+    {% endif %}
+    <form method="post" action="/admin/orders/{{ o.id }}/approve" class="card row">
+      <label>Invoice date <input type="date" name="invoice_date"></label>
+      <input type="hidden" name="invoice_now" value="1">
+      <button {{ 'disabled' if short }}>Approve and raise GST invoice</button>
+    </form>
+    <form method="post" action="/admin/orders/{{ o.id }}/reject" class="card row">
+      <label style="flex:1">Reason <input name="reason" placeholder="e.g. stock short, call back next week"></label>
+      <button class="danger">Reject</button>
+    </form>
+  {% elif o.status == 'APPROVED' %}
+    <form method="post" action="/admin/orders/{{ o.id }}/invoice" class="card row">
+      <label>Invoice date <input type="date" name="invoice_date"></label><button>Raise GST invoice</button>
+    </form>
+  {% endif %}
+  {% if invoice %}<p>Invoice: <a href="/admin/invoices/{{ invoice.id }}">{{ invoice.number }}</a></p>{% endif %}
+</div>
+</div>
+{% endblock %}

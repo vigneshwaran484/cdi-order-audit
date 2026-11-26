@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/admin/invoices">← Invoices</a></p>
+<h1>Tax invoice {{ inv.number }} <span class="pill {{ inv.status }}">{{ inv.status|lower }}</span></h1>
+<p class="muted">{{ inv.customer.name }} · GSTIN {{ inv.customer.gstin or 'unregistered' }} · place of supply
+  {{ STATES.get(inv.place_of_supply, inv.place_of_supply) }} ({{ inv.place_of_supply }}) · {{ inv.invoice_date.strftime('%d-%m-%Y') }}</p>
+<div class="row noprint" style="margin-bottom:1rem">
+  <a class="btn" href="/admin/invoices/{{ inv.id }}/pdf" target="_blank">Download PDF</a>
+  <a class="btn secondary" href="{{ whatsapp }}" target="_blank">Share on WhatsApp</a>
+  <a class="btn secondary" href="{{ mailto }}">Email</a>
+</div>
+<div class="tablewrap"><table>
+  <tr><th>Product</th><th>HSN</th><th class="n">Qty</th><th class="n">Rate</th><th class="n">Taxable</th><th class="n">GST %</th><th class="n">CGST</th><th class="n">SGST</th><th class="n">IGST</th></tr>
+  {% for ln in inv.lines %}
+  <tr><td>{{ ln.item.name }}</td><td>{{ ln.hsn_code }}</td><td class="n">{{ ln.qty|qty }}</td><td class="n">{{ ln.rate }}</td>
+    <td class="n">{{ ln.taxable|money }}</td><td class="n">{{ ln.gst_rate|qty }}</td><td class="n">{{ ln.cgst|money }}</td><td class="n">{{ ln.sgst|money }}</td><td class="n">{{ ln.igst|money }}</td></tr>
+  {% endfor %}
+  <tr class="total"><td colspan="4">Total ₹{{ inv.total|money }}</td><td class="n">{{ inv.taxable|money }}</td><td></td>
+    <td class="n">{{ inv.cgst|money }}</td><td class="n">{{ inv.sgst|money }}</td><td class="n">{{ inv.igst|money }}</td></tr>
+</table></div>
+
+<div class="grid">
+  <div class="card">
+    <h2>Dispatch</h2>
+    {% if inv.dispatched_at %}<p class="good">Dispatched on {{ inv.dispatched_at.strftime('%d-%m-%Y') }}. Finished-goods stock was reduced.</p>
+    {% elif inv.status == 'POSTED' and user.role == 'ADMIN' %}
+    <form method="post" action="/admin/invoices/{{ inv.id }}/dispatch" class="row">
+      <label>Date <input type="date" name="dispatch_date"></label><button>Record dispatch</button></form>
+    {% else %}<p class="muted">Not dispatched.</p>{% endif %}
+  </div>
+  <div class="card">
+    <h2>Payments</h2>
+    {% for p in pays %}<div>{{ p.paid_on.strftime('%d-%m-%Y') }} · {{ p.mode }} · ₹{{ p.amount|money }}</div>{% else %}<p class="muted">None yet.</p>{% endfor %}
+    <p>Due on this invoice: <b>₹{{ due|money }}</b><br>Customer outstanding: <b>₹{{ outstanding|money }}</b></p>
+    {% if user.role == 'ADMIN' and inv.status == 'POSTED' and due > 0 %}
+    <form method="post" action="/admin/payments" class="row">
+      <input type="hidden" name="customer_id" value="{{ inv.customer_id }}"><input type="hidden" name="invoice_id" value="{{ inv.id }}">
+      <label>Amount <input class="num" name="amount" required></label>
+      <label>Mode <select name="mode"><option>UPI</option><option>CASH</option><option>BANK</option><option>CHEQUE</option></select></label>
+      <label>Date <input type="date" name="paid_on"></label>
+      <button>Record payment</button>
+    </form>{% endif %}
+  </div>
+  <div class="card">
+    <h2>Cancel</h2>
+    {% if cn %}<p class="bad">Cancelled by credit note {{ cn.number }} on {{ cn.note_date.strftime('%d-%m-%Y') }}: {{ cn.reason }}</p>
+    {% elif user.role == 'ADMIN' %}
+    <p class="muted small">Posted invoices are never deleted. Cancelling raises a credit note; dispatched goods come back into stock.</p>
+    <form method="post" action="/admin/invoices/{{ inv.id }}/cancel" class="row">
+      <label style="flex:1">Reason <input name="reason" required></label><button class="danger">Cancel with credit note</button></form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

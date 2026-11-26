@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Orders</h1>
+<div class="tabs">
+  {% for s in ['SUBMITTED','APPROVED','INVOICED','DISPATCHED','REJECTED','ALL'] %}
+  <a href="?status={{ s }}" class="{{ 'on' if status == s }}">{{ s|capitalize }}</a>{% endfor %}
+</div>
+<div class="tablewrap"><table>
+  <tr><th>#</th><th>Date</th><th>Customer</th><th>Salesman</th><th class="n">Packets</th><th class="n">Invoice value</th><th>Stock</th><th>Status</th><th></th></tr>
+  {% for o, sm, ok, tax in rows %}
+  <tr>
+    <td>{{ o.id }}</td><td>{{ o.order_date.strftime('%d-%m-%Y') }}</td><td>{{ o.customer.name }}</td><td>{{ sm.full_name }}</td>
+    <td class="n">{{ o.lines|sum(attribute='qty')|qty }}</td><td class="n">₹{{ tax.total|money }}</td>
+    <td>{% if o.status == 'SUBMITTED' %}{% if ok %}<span class="pill ok">covered</span>{% else %}<span class="pill bad">short</span>{% endif %}{% endif %}</td>
+    <td><span class="pill {{ o.status }}">{{ o.status|lower }}</span></td>
+    <td><a href="/admin/orders/{{ o.id }}">Open</a></td>
+  </tr>
+  {% else %}<tr><td colspan="9" class="muted">No orders here.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}
