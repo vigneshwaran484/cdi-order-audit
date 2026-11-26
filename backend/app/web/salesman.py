@@ -34,7 +34,7 @@ def _my_customers(db: Session, user: User) -> list[Customer]:
 def order_screen(request: Request, user: User = Depends(salesman_only),
                  db: Session = Depends(get_db)):
     customers = [{"id": c.id, "name": c.name, "kind": c.kind} for c in _my_customers(db, user)]
-    products = [{"id": p.id, "name": p.name, "price": str(p.sell_price), "gst": str(p.gst_rate)}
+    products = [{"id": p.id, "name": p.name, "price": str(p.sell_price), "gst": f"{p.gst_rate.normalize():f}"}
                 for p in db.scalars(select(Item).where(Item.kind == "FINISHED").order_by(Item.name))]
     return render(request, "m_order.html", user, customers=customers, products=products)
 

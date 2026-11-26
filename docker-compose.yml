@@ -15,5 +15,16 @@ services:
       interval: 3s
       retries: 10
 
+  app:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://cdi:cdi@db:5432/cdi
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-for-a-real-deployment}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
 volumes:
   pgdata:
