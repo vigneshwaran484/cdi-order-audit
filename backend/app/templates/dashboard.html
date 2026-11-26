@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Owner summary · {{ today.strftime('%d %b %Y') }}</h1>
+<div class="grid">
+  <div class="card"><div class="muted small">Orders today</div><div class="kpi">{{ todays|length }}</div></div>
+  <div class="card"><div class="muted small">Waiting for approval</div><div class="kpi">{{ pending|length }}</div>
+    {% if short %}<span class="pill bad">{{ short|length }} short of stock</span>{% endif %}</div>
+  <div class="card"><div class="muted small">Sales this month (before tax)</div><div class="kpi">₹{{ month_taxable|money }}</div></div>
+  <div class="card"><div class="muted small">Outstanding dues</div><div class="kpi">₹{{ total_out|money }}</div></div>
+</div>
+<div class="grid">
+<div>
+  <h2>Variance alerts this month</h2>
+  {% for run, what, v in alerts %}<div class="card small"><span class="pill FLAG">{{ '%+.2f'|format(v) }}%</span> {{ what }} in <a href="/production/runs/{{ run.id }}">{{ run.batch_no }}</a></div>
+  {% else %}<p class="muted">No variance beyond tolerance.</p>{% endfor %}
+  <h2>Cost per packet this month</h2>
+  <div class="tablewrap"><table><tr><th>Product</th><th class="n">Cost</th><th class="n">Price</th><th class="n">Margin</th></tr>
+    {% for c in costs %}<tr><td>{{ c.product }}</td><td class="n">₹{{ c.per_packet|money }}</td><td class="n">₹{{ c.sell_price|money }}</td><td class="n">{{ c.margin_pct }}%</td></tr>
+    {% else %}<tr><td colspan="4" class="muted">No production this month.</td></tr>{% endfor %}</table></div>
+</div>
+<div>
+  <h2>Stock levels</h2>
+  <div class="tablewrap"><table><tr><th>Item</th><th class="n">Closing</th><th></th></tr>
+    {% for s in stock %}<tr><td>{{ s.item }}</td><td class="n">{{ s.closing|qty }} {{ s.unit }}</td><td>{% if s.low %}<span class="pill bad">reorder</span>{% endif %}</td></tr>{% endfor %}</table></div>
+  <h2>Outstanding by customer</h2>
+  <div class="tablewrap"><table>{% for c, amt in outstanding %}<tr><td>{{ c.name }}</td><td class="n">₹{{ amt|money }}</td></tr>
+    {% else %}<tr><td class="muted">Nothing outstanding.</td></tr>{% endfor %}</table></div>
+</div>
+</div>
+{% endblock %}

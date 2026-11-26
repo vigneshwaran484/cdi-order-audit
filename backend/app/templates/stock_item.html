@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="/stock">← Stock</a></p>
+<h1>Stock ledger: {{ item.name }} ({{ item.stock_unit }})</h1>
+{% set rows = r.rows %}
+{% include "_report_table.html" %}
+{% endblock %}

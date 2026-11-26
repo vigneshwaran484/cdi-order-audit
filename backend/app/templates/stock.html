@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Stock as of {{ t.strftime('%d %b %Y') }}</h1>
+<p class="muted small">Balances are summed from the stock ledger; click an item for every movement and its source document.</p>
+{% set rows = r.with_totals() %}
+<div class="tablewrap"><table>
+  <tr><th>Code</th><th>Item</th><th>Type</th><th class="n">Opening (month)</th><th class="n">Receipts</th><th class="n">Issues / sales</th><th class="n">Closing</th><th>Unit</th><th class="n">Value</th><th></th></tr>
+  {% for row in rows %}
+  <tr class="{{ 'total' if row.code == 'TOTAL' }}">
+    {% if row.code == 'TOTAL' %}<td colspan="8">Total stock value</td>{% else %}
+    <td><a href="/stock/{{ ids[row.code] }}">{{ row.code }}</a></td><td>{{ row.item }}</td><td>{{ row.kind|lower }}</td>
+    <td class="n">{{ row.opening|qty }}</td><td class="n">{{ row.receipts|qty }}</td><td class="n">{{ row.issues|qty }}</td>
+    <td class="n"><b>{{ row.closing|qty }}</b></td><td>{{ row.unit }}</td>{% endif %}
+    <td class="n">₹{{ row.value|money }}</td><td>{% if row.low %}<span class="pill bad">below reorder</span>{% endif %}</td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}

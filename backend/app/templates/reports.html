@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Reports</h1>
+<div class="tabs">{% for k, label in labels.items() %}<a href="?key={{ k }}&date_from={{ f }}&date_to={{ t }}" class="{{ 'on' if k == key }}">{{ label }}</a>{% endfor %}</div>
+<form method="get" class="card row noprint">
+  <input type="hidden" name="key" value="{{ key }}">
+  <label>From <input type="date" name="date_from" value="{{ f }}"></label>
+  <label>To <input type="date" name="date_to" value="{{ t }}"></label>
+  {% if key == 'stock-ledger' %}<label>Item <select name="item_id"><option value="">All items</option>
+    {% for i in items %}<option value="{{ i.id }}" {{ 'selected' if i.id == item_id }}>{{ i.name }}</option>{% endfor %}</select></label>{% endif %}
+  <button>Show</button>
+  {% set q = '?key=' ~ key ~ '&date_from=' ~ f ~ '&date_to=' ~ t ~ ('&item_id=' ~ item_id if item_id else '') %}
+  <a class="btn secondary" href="{{ q }}&fmt=xlsx">Excel</a>
+  <a class="btn secondary" href="{{ q }}&fmt=csv">CSV</a>
+  <a class="btn secondary" href="{{ q }}&fmt=pdf" target="_blank">PDF</a>
+</form>
+<h2>{{ r.title }} <span class="muted small">{{ f.strftime('%d %b %Y') }} to {{ t.strftime('%d %b %Y') }}</span></h2>
+{% include "_report_table.html" %}
+{% endblock %}

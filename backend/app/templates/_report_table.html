@@ -1,0 +1,11 @@
+<div class="tablewrap"><table>
+  <tr>{% for k, label in r.columns %}<th>{{ label }}</th>{% endfor %}</tr>
+  {% for row in rows %}
+  <tr class="{{ 'total' if row[r.columns[0][0]] == 'TOTAL' }}">
+    {% for k, label in r.columns %}{% set v = row.get(k) %}
+    <td class="{{ 'n' if v is number }} {{ 'bad' if v in ('FLAG', 'LOW') }}">{{ v|cell(k) }}</td>
+    {% endfor %}
+  </tr>
+  {% else %}<tr><td colspan="{{ r.columns|length }}" class="muted">Nothing in this period.</td></tr>{% endfor %}
+</table></div>
+{% for n in r.notes if n %}<p class="muted small">{{ n }}</p>{% endfor %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Audit log <span class="muted small">(latest 300 of {{ total }})</span></h1>
+<div class="tablewrap"><table>
+  <tr><th>When</th><th>User</th><th>Document</th><th>Action</th><th>Before</th><th>After</th></tr>
+  {% for a in rows %}
+  <tr><td class="small">{{ a.at.strftime('%d-%m-%Y %H:%M') }}</td><td>{{ names.get(a.user_id, 'system') }}</td><td>{{ a.entity }} #{{ a.entity_id }}</td>
+    <td>{{ a.action }}</td><td class="small"><code>{{ a.before|tojson if a.before else '' }}</code></td><td class="small"><code>{{ a.after|tojson if a.after else '' }}</code></td></tr>
+  {% endfor %}
+</table></div>
+{% endblock %}
