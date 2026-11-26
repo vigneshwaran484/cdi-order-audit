@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block bodyclass %}phone{% endblock %}
+{% block title %}My orders{% endblock %}
+{% block content %}
+<h1>My orders</h1>
+<div class="tablewrap"><table>
+  <tr><th>#</th><th>Customer</th><th>Date</th><th class="n">Packets</th><th>Status</th></tr>
+  {% for o in orders %}
+  <tr>
+    <td>{{ o.id }}</td><td>{{ o.customer.name }}</td><td>{{ o.order_date.strftime('%d %b') }}</td>
+    <td class="n">{{ o.lines|sum(attribute='qty')|qty }}</td>
+    <td><span class="pill {{ o.status }}">{{ o.status|lower }}</span>
+      {% if o.reject_reason %}<div class="small bad">{{ o.reject_reason }}</div>{% endif %}</td>
+  </tr>
+  {% else %}<tr><td colspan="5" class="muted">No orders yet.</td></tr>{% endfor %}
+</table></div>
+<h2>Customer-wise sales (invoiced)</h2>
+<div class="tablewrap"><table>
+  <tr><th>Customer</th><th class="n">Invoices</th><th class="n">Value incl. GST</th></tr>
+  {% for name, n, total in sales %}
+  <tr><td>{{ name }}</td><td class="n">{{ n }}</td><td class="n">₹{{ total|money }}</td></tr>
+  {% else %}<tr><td colspan="3" class="muted">Nothing invoiced yet.</td></tr>{% endfor %}
+</table></div>
+{% endblock %}

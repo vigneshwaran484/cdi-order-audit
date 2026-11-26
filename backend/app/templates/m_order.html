@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block bodyclass %}phone{% endblock %}
+{% block title %}New order{% endblock %}
+{% block content %}
+<div id="net" class="net on">Online</div>
+<h1>New order</h1>
+<div class="card stack big">
+  <label>Customer
+    <select id="customer" required>
+      <option value="">Choose customer…</option>
+      {% for c in customers %}<option value="{{ c.id }}">{{ c.name }} ({{ c.kind|lower }})</option>{% endfor %}
+    </select>
+  </label>
+  <label>Order date <input id="odate" type="date"></label>
+</div>
+<div class="card">
+  {% for p in products %}
+  <div class="prod">
+    <div><b>{{ p.name }}</b><div class="muted small">₹{{ p.price }} / packet + {{ p.gst }}% GST</div></div>
+    <div class="stepper">
+      <button type="button" class="secondary" data-step="-10" data-id="{{ p.id }}">−</button>
+      <input inputmode="numeric" pattern="[0-9]*" data-qty="{{ p.id }}" data-price="{{ p.price }}" value="0">
+      <button type="button" class="secondary" data-step="10" data-id="{{ p.id }}">+</button>
+    </div>
+  </div>
+  {% endfor %}
+  <p class="muted small">Quantities are in packets (± buttons step by 10). Prices come from the price list.</p>
+  <div><b>Amount before tax: ₹<span id="amt">0.00</span></b></div>
+</div>
+<div class="sticky"><button id="submit" type="button">Submit order</button></div>
+<div id="msg"></div>
+<div class="card" id="queuebox" hidden>
+  <b>Waiting to send</b> <span class="muted small">(saved on this phone; sent automatically when online)</span>
+  <ul id="queue"></ul>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  window.ORDER_DATA = {{ {"customers": customers, "products": products}|tojson }};
+</script>
+<script src="/static/order.js"></script>
+{% endblock %}
