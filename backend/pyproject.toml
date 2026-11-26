@@ -9,10 +9,18 @@ dependencies = [
     "sqlalchemy>=2.0.36",
     "psycopg[binary]>=3.2",
     "pydantic>=2.9",
+    "openpyxl>=3.1.5",
+    "fpdf2>=2.9.0",
+    "jinja2>=3.1.6",
+    "python-multipart>=0.0.34",
+    "itsdangerous>=2.2.0",
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.3"]
+dev = [
+    "httpx>=0.28.1",
+    "pytest>=8.3",
+]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
