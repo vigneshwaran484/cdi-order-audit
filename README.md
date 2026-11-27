@@ -105,6 +105,7 @@ The password for every demo login is `demo123`. All names, GSTINs and logins are
 - **Pouch variance is also flagged (+3.19%).** The pouch standard is planned on the 188 good packets, and 194 pouches were issued because 6 were damaged. The damage is wastage, so it is flagged alongside yield and oil.
 - **Cartons close at 21.** The benchmark says 9 cartons were used, and 188 packets fill 9 full cartons (8 packets loose), so the planned and actual carton counts match.
 - **Cost per packet uses weighted-average material cost.** Flour is ₹43.125/kg after the ₹45 purchase. The 6 damaged pouches are included in the cost. Overheads are the ₹1,800 entered for this run. The full working is in docs/DESIGN.md §5.
+- **Demo video, step 8:** labour was typed as ₹1,400 instead of ₹1,200 by mistake, so the video shows **₹32.21** per packet (₹4,055 material + ₹2,000 overheads, ÷ 188). With the benchmark's ₹1,200 + ₹600 the system gives **₹31.14**, which `test_cost_per_packet` and the end-to-end web test check. Every other figure in the video matches the benchmark.
 - **Opening finished goods (50 packets)** are valued at the standard material cost at opening prices, ₹19.85 per packet. The brief gives no value for them.
 
 ## Assumptions
